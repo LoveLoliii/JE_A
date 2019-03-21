@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">JE_A</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="input_key_words">输入歌名关键字</string>
 </resources>
