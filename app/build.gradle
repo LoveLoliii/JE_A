@@ -5,13 +5,16 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
+    def currentVersionCode = getVersionCode()
+    def currentVersionName = getVersionName()
     compileSdkVersion 28
+
     defaultConfig {
         applicationId "com.summersama.je_a"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        versionCode currentVersionCode
+        versionName currentVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -21,11 +24,49 @@ android {
         }
     }
 }
+def getVersionName(){
+    def versionFile = file('version.properties')
+    if (versionFile.canRead()) {// 判断文件读取异常
+        Properties versionProps = new Properties()
+        versionProps.load(new FileInputStream(versionFile))
+        def versionNameMain = versionProps['VERSION_NAME_MAIN'].toInteger()// 读取文件里面的主版本号
+        def versionNameSubsidiary = versionProps['VERSION_NAME_SUBSIDIARY'].toInteger()//读取文件中的副版本号
+        def versionNameBugVersion = versionProps['VERSION_NAME_BUG_VERSION'].toInteger()// 读取文件中bug版本号
+        def runTasks = gradle.startParameter.taskNames
+        if (':app:assembleDebug' in runTasks ) {
+            // 仅增加bug版本 其他版本请到version.properties文件中更改。 发布新版本是请手动更新服务器的版本库。  url： updateVersion
+            versionProps['VERSION_NAME'] = (versionNameMain).toString()+'.'+(versionNameSubsidiary).toString()+'.'+(++versionNameBugVersion).toString()
+            versionProps['VERSION_NAME_BUG_VERSION'] = (versionNameBugVersion).toString();
+            versionProps.store(versionFile.newWriter(), null)
+        }
+        def versionName = versionProps['VERSION_NAME'].toString()
+        return versionName // 返回自增之后的版本号
+    } else {
+        throw new GradleException("Could not find version.properties!")
+    }
+}
+def getVersionCode(){
+    def versionFile = file('version.properties')
+    if (versionFile.canRead()) {// 判断文件读取异常
+        Properties versionProps = new Properties()
+        versionProps.load(new FileInputStream(versionFile))
+        def versionCode = versionProps['VERSION_CODE'].toInteger()// 读取文件里面的版本号
+        def runTasks = gradle.startParameter.taskNames
+        if (':app:assembleDebug' in runTasks ) {//仅在assembleRelease任务是增加版本号,其他渠道包在此分别配置
+            // 版本号自增之后再写入文件（此处是关键，版本号自增+1）
+            versionProps['VERSION_CODE'] = (++versionCode).toString()
+            versionProps.store(versionFile.newWriter(), null)
+        }
+        return versionCode // 返回自增之后的版本号
+    } else {
+        throw new GradleException("Could not find version.properties!")
+    }
+}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-   // implementation 'androidx.appcompat:appcompat:1.0.0-beta01'
+    // implementation 'androidx.appcompat:appcompat:1.0.0-beta01'
     implementation 'androidx.core:core-ktx:1.1.0-alpha05'
     //implementation 'androidx.constraintlayout:constraintlayout:1.1.2'
     implementation 'com.google.android.material:material:1.0.0-beta01'
@@ -46,4 +87,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:3.12.1")
     //gson
     implementation 'com.google.code.gson:gson:2.8.5'
+
+    // md support
+    implementation "ru.noties.markwon:core:+"
+    implementation "ru.noties.markwon:html:+"
+    implementation "ru.noties.markwon:image-okhttp:+"
 }
