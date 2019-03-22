@@ -16,10 +16,144 @@ import ru.noties.markwon.Markwon
 import ru.noties.markwon.image.ImagesPlugin
 import java.io.IOException
 import android.graphics.BitmapFactory
+import android.media.MediaPlayer
+import android.net.Uri
+import android.util.TimeUtils
+import com.google.gson.Gson
+import com.summersama.je_a.entity.SearchSongInfo
+import com.google.gson.reflect.TypeToken
+import com.summersama.je_a.entity.SongDownloadInfo
+import java.io.File
+import java.io.FileInputStream
+import java.io.InputStream
+import java.net.URI
 
 
 class SongDetailActivity : AppCompatActivity() {
-
+  //  val url:String = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=search&count=10&source=tencent&pages=1&name="+key+"&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
+/* 返回json结构
+   [
+    {
+        "id": "0026EwGH2X6iP6",
+        "name": "Climbing Up \"Iknimaya - The Path to Heaven\"",
+        "artist": [
+        "James Horner"
+        ],
+        "album": "Avatar (Music from the Motion Picture)",
+        "pic_id": "000t7z8s0MMZSD",
+        "url_id": "0026EwGH2X6iP6",
+        "lyric_id": "0026EwGH2X6iP6",
+        "source": "tencent"
+    },
+    {
+        "id": "003bOJra0pKiQL",
+        "name": "The Path to Hearth-Home",
+        "artist": [
+        "英雄联盟"
+        ],
+        "album": "",
+        "pic_id": "001ZaCQY2OxVMg",
+        "url_id": "003bOJra0pKiQL",
+        "lyric_id": "003bOJra0pKiQL",
+        "source": "tencent"
+    },
+    {
+        "id": "002bvQRM07bGnu",
+        "name": "The Path To Decay",
+        "artist": [
+        "Sirenia"
+        ],
+        "album": "The 13th Floor",
+        "pic_id": "0023bJCl1Yg9Fz",
+        "url_id": "002bvQRM07bGnu",
+        "lyric_id": "002bvQRM07bGnu",
+        "source": "tencent"
+    },
+    {
+        "id": "001En2L02uR8vh",
+        "name": "Avatar, Film Score Climbing Up Iknimaya/The Path to Heaven",
+        "artist": [
+        "James Horner"
+        ],
+        "album": "James Horner Flight 1955-2015",
+        "pic_id": "0018GxTP3PDbyS",
+        "url_id": "001En2L02uR8vh",
+        "lyric_id": "001En2L02uR8vh",
+        "source": "tencent"
+    },
+    {
+        "id": "004f6QyR1UFyDM",
+        "name": "The Path to Escape",
+        "artist": [
+        "Rob Simonsen"
+        ],
+        "album": "Captive State (Original Motion Picture Soundtrack)",
+        "pic_id": "0046Y5hD46JYhH",
+        "url_id": "004f6QyR1UFyDM",
+        "lyric_id": "004f6QyR1UFyDM",
+        "source": "tencent"
+    },
+    {
+        "id": "0042kJVc2ipTHW",
+        "name": "On the Path to Love",
+        "artist": [
+        "Saga Moon"
+        ],
+        "album": "Jazz Lounge Chillout",
+        "pic_id": "004bQbYw24seLo",
+        "url_id": "0042kJVc2ipTHW",
+        "lyric_id": "0042kJVc2ipTHW",
+        "source": "tencent"
+    },
+    {
+        "id": "0036ICBp3IvTRs",
+        "name": "The Path To Decay(Bonus Tracks)",
+        "artist": [
+        "Sirenia"
+        ],
+        "album": "The 13th Floor",
+        "pic_id": "0023bJCl1Yg9Fz",
+        "url_id": "0036ICBp3IvTRs",
+        "lyric_id": "0036ICBp3IvTRs",
+        "source": "tencent"
+    },
+    {
+        "id": "002YcU1J32eRoI",
+        "name": "The Path to Glory",
+        "artist": [
+        "Unkown Artists"
+        ],
+        "album": "",
+        "pic_id": "001ZaCQY2OxVMg",
+        "url_id": "002YcU1J32eRoI",
+        "lyric_id": "002YcU1J32eRoI",
+        "source": "tencent"
+    },
+    {
+        "id": "004MzwMt2P5Vmn",
+        "name": "The Path To Decay",
+        "artist": [
+        "Sirenia"
+        ],
+        "album": "The Path To Decay",
+        "pic_id": "003FA1NA1dYruA",
+        "url_id": "004MzwMt2P5Vmn",
+        "lyric_id": "004MzwMt2P5Vmn",
+        "source": "tencent"
+    },
+    {
+        "id": "000amr7i03Wc30",
+        "name": "The Path To the Infinity",
+        "artist": [
+        "Blue Velvet"
+        ],
+        "album": "Touch Me",
+        "pic_id": "004W1K8445VIpG",
+        "url_id": "000amr7i03Wc30",
+        "lyric_id": "000amr7i03Wc30",
+        "source": "tencent"
+    }
+    ]*/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(com.summersama.je_a.R.layout.activity_sing_detail)
@@ -161,6 +295,62 @@ class SongDetailActivity : AppCompatActivity() {
 
     private fun initData() {
         val issue:IssuesInfo=intent.getParcelableExtra("data")
+        // 搜索通过关键词音乐
+        var key = issue.title
+        key = key.subSequence(0,key.length/2).toString()
+        Log.d(localClassName,key);
+        val getMusicUrl:String = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=search&count=10&source=tencent&pages=1&name="+key+"&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
+        OkHttpUtil.get(getMusicUrl).enqueue(object :Callback{
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(localClassName,e.message)
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+
+                val rs:String = response.body()?.string()!!
+                var s=rs
+                s = s.replaceBefore("[","")
+                s = s.replaceAfterLast("]","")
+                val g:Gson = Gson()
+
+                val type = object : TypeToken<List<SearchSongInfo>>() {
+
+                }.type
+                val list:List<SearchSongInfo> = g.fromJson(s,type)
+                val getPlayUrl = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=url&id="+list[0].id+"&source=tencent&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
+                Log.d(localClassName,s)
+                OkHttpUtil.get(getPlayUrl).enqueue(object :Callback{
+                    override fun onFailure(call: Call, e: IOException) {
+                        Log.e(localClassName,e.message)
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                       var rs = response.body()?.string();
+                        rs = rs?.replaceBefore("{","")
+                        rs = rs?.replaceAfterLast("}","")
+                        Log.d(localClassName,rs)
+                        val songDownloadInfo = g.fromJson<SongDownloadInfo>(rs,SongDownloadInfo::class.java);
+                        Log.d(localClassName,songDownloadInfo.url)
+                        OkHttpUtil.get(songDownloadInfo.url).enqueue(object :Callback{
+                            override fun onFailure(call: Call, e: IOException) {
+                                Log.e(localClassName,e.message)
+                            }
+
+                            override fun onResponse(call: Call, response: Response) {
+                             /*   val file =  File(response.body()?.byteStream())
+                               val  u:Uri = Uri.fromFile()
+                                 val m:MediaPlayer = MediaPlayer.create(applicationContext,
+
+                                 );
+                               val u =  response.body()!!.byteStream();
+                                m.setDataSource(applicationContext,response.body())*/
+                            }
+                        })
+                    }
+                })
+            }
+        })
+
         Log.i(localClassName,issue.toString())
         asd_upload_tx.text = issue.user.login
         val url = issue.user.avatar_url
