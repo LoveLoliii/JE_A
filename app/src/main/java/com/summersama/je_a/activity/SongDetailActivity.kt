@@ -14,23 +14,21 @@ import okhttp3.Callback
 import okhttp3.Response
 import ru.noties.markwon.Markwon
 import ru.noties.markwon.image.ImagesPlugin
-import java.io.IOException
 import android.graphics.BitmapFactory
 import android.media.MediaPlayer
 import android.net.Uri
-import android.util.TimeUtils
+import android.os.Environment
+import android.text.TextUtils
 import com.google.gson.Gson
 import com.summersama.je_a.entity.SearchSongInfo
 import com.google.gson.reflect.TypeToken
 import com.summersama.je_a.entity.SongDownloadInfo
-import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
-import java.net.URI
+import ru.noties.markwon.image.MediaDecoder
+import java.io.*
 
 
 class SongDetailActivity : AppCompatActivity() {
-  //  val url:String = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=search&count=10&source=tencent&pages=1&name="+key+"&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
+    //  val url:String = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=search&count=10&source=tencent&pages=1&name="+key+"&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
 /* 返回json结构
    [
     {
@@ -160,6 +158,7 @@ class SongDetailActivity : AppCompatActivity() {
         randomWaterBallAnimation();
         initData();
     }
+
     private fun randomWaterBallAnimation() {
 
         val mAnimation = TranslateAnimation(
@@ -188,7 +187,7 @@ class SongDetailActivity : AppCompatActivity() {
         asd_water_ball_2.animation = mAnimation2
 
 
-        val mAnimation3  = TranslateAnimation(
+        val mAnimation3 = TranslateAnimation(
             TranslateAnimation.RELATIVE_TO_PARENT, 0.5f,
             TranslateAnimation.RELATIVE_TO_PARENT, 1.0f,
             TranslateAnimation.RELATIVE_TO_PARENT, 0f,
@@ -240,7 +239,7 @@ class SongDetailActivity : AppCompatActivity() {
         asd_water_ball_6.animation = mAnimation6
 
 
-        val mAnimation7  = TranslateAnimation(
+        val mAnimation7 = TranslateAnimation(
             TranslateAnimation.RELATIVE_TO_PARENT, 0.8f,
             TranslateAnimation.RELATIVE_TO_PARENT, 0.1f,
             TranslateAnimation.RELATIVE_TO_PARENT, 0.2f,
@@ -264,7 +263,6 @@ class SongDetailActivity : AppCompatActivity() {
         mAnimation8.repeatMode = Animation.REVERSE
         mAnimation8.interpolator = LinearInterpolator()
         asd_water_ball_8.animation = mAnimation8
-
 
 
         val mAnimation10 = TranslateAnimation(
@@ -294,82 +292,146 @@ class SongDetailActivity : AppCompatActivity() {
     }
 
     private fun initData() {
-        val issue:IssuesInfo=intent.getParcelableExtra("data")
+        val issue: IssuesInfo = intent.getParcelableExtra("data")
         // 搜索通过关键词音乐
         var key = issue.title
-        key = key.subSequence(0,key.length/2).toString()
-        Log.d(localClassName,key);
-        val getMusicUrl:String = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=search&count=10&source=tencent&pages=1&name="+key+"&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
-        OkHttpUtil.get(getMusicUrl).enqueue(object :Callback{
+        key = key.subSequence(0, key.length / 2).toString()
+        Log.d(localClassName, key);
+        Log.i(localClassName, issue.toString())
+        asd_upload_tx.text = issue.user.login
+        val url = issue.user.avatar_url
+        OkHttpUtil.get(url).enqueue(
+            object : Callback {
+                override fun onResponse(call: Call, response: Response) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null) {
+                        val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        runOnUiThread { asd_uppic_iv.setImageBitmap(bitmap) }
+                    }
+                }
+
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.e(localClassName, e.message)
+                }
+            })
+        val markwon = Markwon.builder(applicationContext)
+            .usePlugin(ImagesPlugin.create(applicationContext)).build()
+        markwon.setMarkdown(asd_body_tx, issue.body)
+        val getMusicUrl: String =
+            "https://s.mli.im/api/?callback=jQuery22408246496842419309_" + System.currentTimeMillis() + "&types=search&count=10&source=tencent&pages=1&name=" + key + "&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
+        OkHttpUtil.get(getMusicUrl).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e(localClassName,e.message)
+                Log.e(localClassName, e.message)
             }
 
             override fun onResponse(call: Call, response: Response) {
 
-                val rs:String = response.body()?.string()!!
-                var s=rs
-                s = s.replaceBefore("[","")
-                s = s.replaceAfterLast("]","")
-                val g:Gson = Gson()
+                val rs: String = response.body()?.string()!!
+                var s = rs
+                s = s.replaceBefore("[", "")
+                s = s.replaceAfterLast("]", "")
+                val g: Gson = Gson()
 
                 val type = object : TypeToken<List<SearchSongInfo>>() {
 
                 }.type
-                val list:List<SearchSongInfo> = g.fromJson(s,type)
-                val getPlayUrl = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=url&id="+list[0].id+"&source=tencent&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
-                Log.d(localClassName,s)
-                OkHttpUtil.get(getPlayUrl).enqueue(object :Callback{
+                val list: List<SearchSongInfo> = g.fromJson(s, type)
+                val getPlayUrl =
+                    "https://s.mli.im/api/?callback=jQuery22408246496842419309_" + System.currentTimeMillis() + "&types=url&id=" + list[0].id + "&source=tencent&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
+                Log.d(localClassName, s)
+                OkHttpUtil.get(getPlayUrl).enqueue(object : Callback {
                     override fun onFailure(call: Call, e: IOException) {
-                        Log.e(localClassName,e.message)
+                        Log.e(localClassName, e.message)
                     }
 
                     override fun onResponse(call: Call, response: Response) {
-                       var rs = response.body()?.string();
-                        rs = rs?.replaceBefore("{","")
-                        rs = rs?.replaceAfterLast("}","")
-                        Log.d(localClassName,rs)
-                        val songDownloadInfo = g.fromJson<SongDownloadInfo>(rs,SongDownloadInfo::class.java);
-                        Log.d(localClassName,songDownloadInfo.url)
-                        OkHttpUtil.get(songDownloadInfo.url).enqueue(object :Callback{
+                        var rs = response.body()?.string();
+                        rs = rs?.replaceBefore("{", "")
+                        rs = rs?.replaceAfterLast("}", "")
+                        Log.d(localClassName, rs)
+                        val songDownloadInfo = g.fromJson<SongDownloadInfo>(rs, SongDownloadInfo::class.java);
+                        Log.d(localClassName, songDownloadInfo.url)
+                        OkHttpUtil.get(songDownloadInfo.url).enqueue(object : Callback {
                             override fun onFailure(call: Call, e: IOException) {
-                                Log.e(localClassName,e.message)
+                                Log.e(localClassName, e.message)
                             }
 
                             override fun onResponse(call: Call, response: Response) {
-                             /*   val file =  File(response.body()?.byteStream())
-                               val  u:Uri = Uri.fromFile()
-                                 val m:MediaPlayer = MediaPlayer.create(applicationContext,
+                                //将返回结果转化为流，并写入文件
+                                var inputStream: InputStream = response.body()?.byteStream()!!;
+                                var `is`: InputStream? = null
+                                var randomAccessFile: RandomAccessFile? = null
+                                var bis: BufferedInputStream? = null
+                                var buff = ByteArray(2048)
 
-                                 );
-                               val u =  response.body()!!.byteStream();
-                                m.setDataSource(applicationContext,response.body())*/
+                                try {
+                                    var len = 0
+                                    `is` = response.body()!!.byteStream()
+                                    bis = BufferedInputStream(`is`)
+                                    var file = getFile()
+                                    // 随机访问文件，可以指定断点续传的起始位置
+                                    randomAccessFile = RandomAccessFile(file, "rwd")
+                                    //randomAccessFile.seek (startsPoint);
+                                    len =bis.read(buff);
+                                    while ((len) != -1) {
+                                        randomAccessFile!!.write(buff, 0, len)
+                                    }
+                                    val m:MediaPlayer = MediaPlayer.create(applicationContext, Uri.fromFile(file));
+                                    m.prepare()
+                                    m.start()
+                                } catch (e: java.lang.Exception) {
+                                }finally {
+                                    try {
+
+                                        `is`?.close()
+
+                                        if (bis != null){
+                                            bis.close();
+                                        }
+                                        if (randomAccessFile != null) {
+                                            randomAccessFile.close();
+                                        }
+                                    } catch (e:Exception) {
+                                        e.printStackTrace();
+                                    }
+                                }
+
+
                             }
                         })
                     }
                 })
+
+
+
+
             }
+
+
         })
+    }
 
-        Log.i(localClassName,issue.toString())
-        asd_upload_tx.text = issue.user.login
-        val url = issue.user.avatar_url
-        OkHttpUtil.get(url).enqueue(object :Callback{
-            override fun onResponse(call: Call, response: Response) {
-                val bytes = response.body()?.bytes()
-                if(bytes !=null) {
-                    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                    runOnUiThread{ asd_uppic_iv.setImageBitmap(bitmap)}
-                }
+
+    private fun getFile(): File {
+        var path = ""
+        if (Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED || !Environment.isExternalStorageRemovable()) {
+            try {
+                path = application.getExternalCacheDir().getAbsolutePath()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
 
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e(localClassName,e.message)
+            if (TextUtils.isEmpty(path)) {
+                path =
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
             }
-        })
-        val  markwon = Markwon.builder(applicationContext)
-            .usePlugin(ImagesPlugin.create(applicationContext)).build()
-        markwon.setMarkdown(asd_body_tx,issue.body)
-
+        } else {
+            path = application.getCacheDir().getAbsolutePath()
+        }
+        return File(path + File.separator + "0.1.3" + File.separator + "sing")
     }
 }
+
+
+
+
