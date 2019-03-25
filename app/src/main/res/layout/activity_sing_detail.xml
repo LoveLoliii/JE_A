@@ -109,13 +109,24 @@
                         android:gravity="center"
                         android:text="@string/uploader"/>
             </LinearLayout>
+            <LinearLayout
+                    android:layout_below="@+id/asd_top_ll"
+                    android:id="@+id/asd_play_ll"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                <Button android:layout_width="50dp" android:layout_height="50dp"
+                        android:id="@+id/asd_play_btn"
+                        android:background="@android:drawable/ic_media_play"
+                />
+
+            </LinearLayout>
             <TextView
                     android:textColor="#FFFF"
                     android:text="@string/song_detail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:id="@+id/asd_body_tx"
-                    android:layout_below="@+id/asd_top_ll"/>
+                    android:layout_below="@+id/asd_play_ll"/>
         </RelativeLayout>
     </androidx.cardview.widget.CardView>
 </androidx.constraintlayout.widget.ConstraintLayout>

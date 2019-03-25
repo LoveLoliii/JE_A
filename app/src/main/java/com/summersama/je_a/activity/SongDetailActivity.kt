@@ -15,6 +15,7 @@ import okhttp3.Response
 import ru.noties.markwon.Markwon
 import ru.noties.markwon.image.ImagesPlugin
 import android.graphics.BitmapFactory
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Environment
@@ -22,12 +23,16 @@ import android.text.TextUtils
 import com.google.gson.Gson
 import com.summersama.je_a.entity.SearchSongInfo
 import com.google.gson.reflect.TypeToken
+import com.summersama.je_a.R
 import com.summersama.je_a.entity.SongDownloadInfo
+import com.summersama.je_a.utils.ConstantUtils
 import ru.noties.markwon.image.MediaDecoder
 import java.io.*
 
 
 class SongDetailActivity : AppCompatActivity() {
+    var sdi:SongDownloadInfo= SongDownloadInfo()
+    var mediaPlayer:MediaPlayer= MediaPlayer()
     //  val url:String = "https://s.mli.im/api/?callback=jQuery22408246496842419309_"+System.currentTimeMillis()+"&types=search&count=10&source=tencent&pages=1&name="+key+"&cache=9a94264bceaad353ef72684c2f01bb76&_="+System.currentTimeMillis()
 /* 返回json结构
    [
@@ -292,16 +297,17 @@ class SongDetailActivity : AppCompatActivity() {
     }
 
     private fun initData() {
+
         val issue: IssuesInfo = intent.getParcelableExtra("data")
         // 搜索通过关键词音乐
         var key = issue.title
-        key = key.subSequence(0, key.length / 2).toString()
+       // key = key.subSequence(0, key.length / 2).toString()
+        key = key.replace("_"," ").replace("-"," ")
         Log.d(localClassName, key);
         Log.i(localClassName, issue.toString())
         asd_upload_tx.text = issue.user.login
         val url = issue.user.avatar_url
-        OkHttpUtil.get(url).enqueue(
-            object : Callback {
+        OkHttpUtil.get(url).enqueue(object : Callback {
                 override fun onResponse(call: Call, response: Response) {
                     val bytes = response.body()?.bytes()
                     if (bytes != null) {
@@ -318,99 +324,100 @@ class SongDetailActivity : AppCompatActivity() {
             .usePlugin(ImagesPlugin.create(applicationContext)).build()
         markwon.setMarkdown(asd_body_tx, issue.body)
         val getMusicUrl: String =
-            "https://s.mli.im/api/?callback=jQuery22408246496842419309_" + System.currentTimeMillis() + "&types=search&count=10&source=tencent&pages=1&name=" + key + "&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
-        OkHttpUtil.get(getMusicUrl).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e(localClassName, e.message)
-            }
+            ConstantUtils.MOLI_URL + System.currentTimeMillis() + "&types=search&count=10&source=tencent&pages=1&name=" + key + "&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
 
-            override fun onResponse(call: Call, response: Response) {
+        asd_play_btn.setOnClickListener {
+                OkHttpUtil.get(getMusicUrl).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.e(localClassName, e.message)
+                }
 
-                val rs: String = response.body()?.string()!!
-                var s = rs
-                s = s.replaceBefore("[", "")
-                s = s.replaceAfterLast("]", "")
-                val g: Gson = Gson()
+                override fun onResponse(call: Call, response: Response) {
 
-                val type = object : TypeToken<List<SearchSongInfo>>() {
+                    val rs: String = response.body()?.string()!!
+                    var s = rs
+                    s = s.replaceBefore("[", "")
+                    s = s.replaceAfterLast("]", "")
+                    val g: Gson = Gson()
 
-                }.type
-                val list: List<SearchSongInfo> = g.fromJson(s, type)
-                val getPlayUrl =
-                    "https://s.mli.im/api/?callback=jQuery22408246496842419309_" + System.currentTimeMillis() + "&types=url&id=" + list[0].id + "&source=tencent&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
-                Log.d(localClassName, s)
-                OkHttpUtil.get(getPlayUrl).enqueue(object : Callback {
-                    override fun onFailure(call: Call, e: IOException) {
-                        Log.e(localClassName, e.message)
+                    val type = object : TypeToken<List<SearchSongInfo>>() {
+
+                    }.type
+                    // fixme 需要处理没有搜索到的情况
+                    val list: List<SearchSongInfo> = g.fromJson(s, type)
+                    val getPlayUrl =
+                        ConstantUtils.MOLI_URL + System.currentTimeMillis() + "&types=url&id=" + list[0].id + "&source=tencent&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
+                    Log.d(localClassName, s)
+                    OkHttpUtil.get(getPlayUrl).enqueue(object : Callback {
+                        override fun onFailure(call: Call, e: IOException) {
+                            Log.e(localClassName, e.message)
+                        }
+
+                        override fun onResponse(call: Call, response: Response) {
+                            var rs = response.body()?.string();
+                            rs = rs?.replaceBefore("{", "")
+                            rs = rs?.replaceAfterLast("}", "")
+                            Log.d(localClassName, rs)
+                            sdi= g.fromJson<SongDownloadInfo>(rs, SongDownloadInfo::class.java);
+                            Log.d(localClassName, sdi.url)
+                            /*val mediaPlayer:MediaPlayer = MediaPlayer()
+                            mediaPlayer.setDataSource(sdi.url)
+                            mediaPlayer.prepare()
+                            mediaPlayer.start()*/
+                            /* OkHttpUtil.get(songDownloadInfo.url).enqueue(object : Callback {
+                                 override fun onFailure(call: Call, e: IOException) {
+                                     Log.e(localClassName, e.message)
+                                 }
+
+                                 override fun onResponse(call: Call, response: Response) {
+                                     val i: InputStream? = response.body()?.byteStream()
+
+                                 }
+                             })*/
+                        }
+                    })
+
+
+
+
+                }
+
+
+            })
+                if (sdi != null){
+                    if(mediaPlayer != null){
+                        if(mediaPlayer.isPlaying){
+                            mediaPlayer.pause()
+                            asd_play_btn.setBackgroundResource(android.R.drawable.ic_media_play)
+                        }
+                        else{
+                            mediaPlayer.reset()
+                            mediaPlayer.setDataSource(sdi.url)
+                            mediaPlayer.prepare()
+                            mediaPlayer.start()
+                            asd_play_btn.setBackgroundResource(R.drawable.pause)
+                        }
+                    }else{
+                        mediaPlayer  = MediaPlayer()
+                        mediaPlayer.setDataSource(sdi.url)
+                        mediaPlayer.prepare()
+                        mediaPlayer.start()
+                        asd_play_btn.setBackgroundResource(android.R.drawable.ic_media_play)
                     }
+                }
 
-                    override fun onResponse(call: Call, response: Response) {
-                        var rs = response.body()?.string();
-                        rs = rs?.replaceBefore("{", "")
-                        rs = rs?.replaceAfterLast("}", "")
-                        Log.d(localClassName, rs)
-                        val songDownloadInfo = g.fromJson<SongDownloadInfo>(rs, SongDownloadInfo::class.java);
-                        Log.d(localClassName, songDownloadInfo.url)
-                        OkHttpUtil.get(songDownloadInfo.url).enqueue(object : Callback {
-                            override fun onFailure(call: Call, e: IOException) {
-                                Log.e(localClassName, e.message)
-                            }
-
-                            override fun onResponse(call: Call, response: Response) {
-                                //将返回结果转化为流，并写入文件
-                                var inputStream: InputStream = response.body()?.byteStream()!!;
-                                var `is`: InputStream? = null
-                                var randomAccessFile: RandomAccessFile? = null
-                                var bis: BufferedInputStream? = null
-                                var buff = ByteArray(2048)
-
-                                try {
-                                    var len = 0
-                                    `is` = response.body()!!.byteStream()
-                                    bis = BufferedInputStream(`is`)
-                                    var file = getFile()
-                                    // 随机访问文件，可以指定断点续传的起始位置
-                                    randomAccessFile = RandomAccessFile(file, "rwd")
-                                    //randomAccessFile.seek (startsPoint);
-                                    len =bis.read(buff);
-                                    while ((len) != -1) {
-                                        randomAccessFile!!.write(buff, 0, len)
-                                    }
-                                    val m:MediaPlayer = MediaPlayer.create(applicationContext, Uri.fromFile(file));
-                                    m.prepare()
-                                    m.start()
-                                } catch (e: java.lang.Exception) {
-                                }finally {
-                                    try {
-
-                                        `is`?.close()
-
-                                        if (bis != null){
-                                            bis.close();
-                                        }
-                                        if (randomAccessFile != null) {
-                                            randomAccessFile.close();
-                                        }
-                                    } catch (e:Exception) {
-                                        e.printStackTrace();
-                                    }
-                                }
+        }
 
 
-                            }
-                        })
-                    }
-                })
-
-
-
-
-            }
-
-
-        })
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if(mediaPlayer.isPlaying){
+            mediaPlayer.release()
+            //mediaPlayer = null
+        }
+    }
 
     private fun getFile(): File {
         var path = ""
