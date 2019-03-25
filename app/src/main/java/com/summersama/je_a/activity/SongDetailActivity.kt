@@ -325,65 +325,64 @@ class SongDetailActivity : AppCompatActivity() {
         markwon.setMarkdown(asd_body_tx, issue.body)
         val getMusicUrl: String =
             ConstantUtils.MOLI_URL + System.currentTimeMillis() + "&types=search&count=10&source=tencent&pages=1&name=" + key + "&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
+        OkHttpUtil.get(getMusicUrl).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(localClassName, e.message)
+            }
 
+            override fun onResponse(call: Call, response: Response) {
+
+                val rs: String = response.body()?.string()!!
+                var s = rs
+                s = s.replaceBefore("[", "")
+                s = s.replaceAfterLast("]", "")
+                val g: Gson = Gson()
+
+                val type = object : TypeToken<List<SearchSongInfo>>() {
+
+                }.type
+                // fixme 需要处理没有搜索到的情况
+                val list: List<SearchSongInfo> = g.fromJson(s, type)
+                val getPlayUrl =
+                    ConstantUtils.MOLI_URL + System.currentTimeMillis() + "&types=url&id=" + list[0].id + "&source=tencent&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
+                Log.d(localClassName, s)
+                OkHttpUtil.get(getPlayUrl).enqueue(object : Callback {
+                    override fun onFailure(call: Call, e: IOException) {
+                        Log.e(localClassName, e.message)
+                    }
+
+                    override fun onResponse(call: Call, response: Response) {
+                        var rs = response.body()?.string();
+                        rs = rs?.replaceBefore("{", "")
+                        rs = rs?.replaceAfterLast("}", "")
+                        Log.d(localClassName, rs)
+                        sdi= g.fromJson<SongDownloadInfo>(rs, SongDownloadInfo::class.java);
+                        Log.d(localClassName, sdi.url)
+                        /*val mediaPlayer:MediaPlayer = MediaPlayer()
+                        mediaPlayer.setDataSource(sdi.url)
+                        mediaPlayer.prepare()
+                        mediaPlayer.start()*/
+                       /* OkHttpUtil.get(songDownloadInfo.url).enqueue(object : Callback {
+                            override fun onFailure(call: Call, e: IOException) {
+                                Log.e(localClassName, e.message)
+                            }
+
+                            override fun onResponse(call: Call, response: Response) {
+                                val i: InputStream? = response.body()?.byteStream()
+
+                            }
+                        })*/
+                    }
+                })
+
+
+
+
+            }
+
+
+        })
         asd_play_btn.setOnClickListener {
-                OkHttpUtil.get(getMusicUrl).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    Log.e(localClassName, e.message)
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-
-                    val rs: String = response.body()?.string()!!
-                    var s = rs
-                    s = s.replaceBefore("[", "")
-                    s = s.replaceAfterLast("]", "")
-                    val g: Gson = Gson()
-
-                    val type = object : TypeToken<List<SearchSongInfo>>() {
-
-                    }.type
-                    // fixme 需要处理没有搜索到的情况
-                    val list: List<SearchSongInfo> = g.fromJson(s, type)
-                    val getPlayUrl =
-                        ConstantUtils.MOLI_URL + System.currentTimeMillis() + "&types=url&id=" + list[0].id + "&source=tencent&cache=9a94264bceaad353ef72684c2f01bb76&_=" + System.currentTimeMillis()
-                    Log.d(localClassName, s)
-                    OkHttpUtil.get(getPlayUrl).enqueue(object : Callback {
-                        override fun onFailure(call: Call, e: IOException) {
-                            Log.e(localClassName, e.message)
-                        }
-
-                        override fun onResponse(call: Call, response: Response) {
-                            var rs = response.body()?.string();
-                            rs = rs?.replaceBefore("{", "")
-                            rs = rs?.replaceAfterLast("}", "")
-                            Log.d(localClassName, rs)
-                            sdi= g.fromJson<SongDownloadInfo>(rs, SongDownloadInfo::class.java);
-                            Log.d(localClassName, sdi.url)
-                            /*val mediaPlayer:MediaPlayer = MediaPlayer()
-                            mediaPlayer.setDataSource(sdi.url)
-                            mediaPlayer.prepare()
-                            mediaPlayer.start()*/
-                            /* OkHttpUtil.get(songDownloadInfo.url).enqueue(object : Callback {
-                                 override fun onFailure(call: Call, e: IOException) {
-                                     Log.e(localClassName, e.message)
-                                 }
-
-                                 override fun onResponse(call: Call, response: Response) {
-                                     val i: InputStream? = response.body()?.byteStream()
-
-                                 }
-                             })*/
-                        }
-                    })
-
-
-
-
-                }
-
-
-            })
                 if (sdi != null){
                     if(mediaPlayer != null){
                         if(mediaPlayer.isPlaying){
