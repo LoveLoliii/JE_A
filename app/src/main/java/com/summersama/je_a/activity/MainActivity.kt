@@ -24,23 +24,44 @@ import android.view.animation.LinearInterpolator
 import android.view.animation.Animation
 import android.view.animation.TranslateAnimation
 import android.widget.TextView
+import androidx.core.view.GravityCompat
+import androidx.databinding.DataBindingUtil
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
+import androidx.navigation.ui.setupWithNavController
 import com.summersama.je_a.R
+import com.summersama.je_a.databinding.ActivityMainBinding
+import kotlinx.android.synthetic.main.fragment_jea.*
 
 /**
  * 使用的首页动画来自
  *  <p> https://github.com/duldun/water-Ball</p>
  * */
 class MainActivity : AppCompatActivity() {
+    private lateinit var drawerLayout:DrawerLayout
+    private lateinit var navController:NavController
     lateinit var adapter:SongListAdapter;
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        randomWaterBallAnimation();
-        initData()
+        val binding:ActivityMainBinding = DataBindingUtil.setContentView(this,R.layout.activity_main)
+        drawerLayout = binding.drawerLayout
 
+        navController =Navigation.findNavController(this,R.id.je_nav_fragment)
+        binding.navigationView.setupWithNavController(navController)
+
+//        setContentView(R.layout.activity_main)
+       // randomWaterBallAnimation();
+      //  initData()
 
     }
-
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
+    }
     private fun randomWaterBallAnimation() {
 
         val mAnimation: TranslateAnimation

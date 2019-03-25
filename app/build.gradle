@@ -1,14 +1,16 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'androidx.navigation.safeargs.kotlin'
 
 android {
     def currentVersionCode = getVersionCode()
     def currentVersionName = getVersionName()
     compileSdkVersion 28
-
+    dataBinding {
+        enabled = true;
+    }
     defaultConfig {
         applicationId "com.summersama.je_a"
         minSdkVersion 21
@@ -16,6 +18,7 @@ android {
         versionCode currentVersionCode
         versionName currentVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary true
     }
     buildTypes {
         release {
@@ -23,8 +26,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
-def getVersionName(){
+
+def getVersionName() {
     def versionFile = file('version.properties')
     if (versionFile.canRead()) {// 判断文件读取异常
         Properties versionProps = new Properties()
@@ -33,9 +41,9 @@ def getVersionName(){
         def versionNameSubsidiary = versionProps['VERSION_NAME_SUBSIDIARY'].toInteger()//读取文件中的副版本号
         def versionNameBugVersion = versionProps['VERSION_NAME_BUG_VERSION'].toInteger()// 读取文件中bug版本号
         def runTasks = gradle.startParameter.taskNames
-        if (':app:assembleDebug' in runTasks ) {
+        if (':app:assembleDebug' in runTasks) {
             // 仅增加bug版本 其他版本请到version.properties文件中更改。 发布新版本是请手动更新服务器的版本库。  url： updateVersion
-            versionProps['VERSION_NAME'] = (versionNameMain).toString()+'.'+(versionNameSubsidiary).toString()+'.'+(++versionNameBugVersion).toString()
+            versionProps['VERSION_NAME'] = (versionNameMain).toString() + '.' + (versionNameSubsidiary).toString() + '.' + (++versionNameBugVersion).toString()
             versionProps['VERSION_NAME_BUG_VERSION'] = (versionNameBugVersion).toString();
             versionProps.store(versionFile.newWriter(), null)
         }
@@ -45,14 +53,15 @@ def getVersionName(){
         throw new GradleException("Could not find version.properties!")
     }
 }
-def getVersionCode(){
+
+def getVersionCode() {
     def versionFile = file('version.properties')
     if (versionFile.canRead()) {// 判断文件读取异常
         Properties versionProps = new Properties()
         versionProps.load(new FileInputStream(versionFile))
         def versionCode = versionProps['VERSION_CODE'].toInteger()// 读取文件里面的版本号
         def runTasks = gradle.startParameter.taskNames
-        if (':app:assembleDebug' in runTasks ) {//仅在assembleRelease任务是增加版本号,其他渠道包在此分别配置
+        if (':app:assembleDebug' in runTasks) {//仅在assembleRelease任务是增加版本号,其他渠道包在此分别配置
             // 版本号自增之后再写入文件（此处是关键，版本号自增+1）
             versionProps['VERSION_CODE'] = (++versionCode).toString()
             versionProps.store(versionFile.newWriter(), null)
@@ -65,16 +74,20 @@ def getVersionCode(){
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    // implementation 'androidx.appcompat:appcompat:1.0.0-beta01'
-    implementation 'androidx.core:core-ktx:1.1.0-alpha05'
-    //implementation 'androidx.constraintlayout:constraintlayout:1.1.2'
-    implementation 'com.google.android.material:material:1.0.0-beta01'
-    testImplementation 'junit:junit:4.12'
-//    androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
-//    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+    kapt "androidx.room:room-compiler:$rootProject.roomVersion"
+    //   kapt "com.github.bumptech.glide:compiler:$rootProject.glideVersion"
+    implementation "androidx.lifecycle:lifecycle-extensions:$rootProject.lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$rootProject.lifecycleVersion"
+    implementation "androidx.navigation:navigation-fragment-ktx:$rootProject.navigationVersion"
+    implementation "androidx.navigation:navigation-ui-ktx:$rootProject.navigationVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$rootProject.kotlinVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:+"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:+"
+    implementation "androidx.core:core-ktx:$rootProject.ktxVersion"
 
-    implementation 'androidx.appcompat:appcompat:1.1.0-alpha02'
+    implementation 'com.google.android.material:material:1.1.0-alpha04'
+    testImplementation 'junit:junit:4.12'
+    implementation 'androidx.appcompat:appcompat:1.1.0-alpha03'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
     implementation 'androidx.annotation:annotation:1.0.2'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
