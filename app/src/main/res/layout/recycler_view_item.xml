@@ -1,7 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout  xmlns:android="http://schemas.android.com/apk/res/android"
          xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable
+                name="clickListener"
+                type="android.view.View.OnClickListener"/>
+        <variable
+                name="issues"
+                type="com.summersama.je_a.data.Issues"/>
+    </data>
 <androidx.cardview.widget.CardView
+                                    android:onClick="@{clickListener}"
                                    android:layout_width="match_parent"
                                    android:layout_height="100dp"
                                    android:layout_gravity="center_horizontal"
@@ -9,9 +18,10 @@
                                    android:gravity="center"
                                    app:cardCornerRadius="8dp">
     <TextView
+
             android:id="@+id/rvi_title_tx"
             android:layout_width="match_parent" android:layout_height="match_parent"
-            android:text="\??"
+            android:text="@{issues.title}"
             android:gravity="center"
             android:layout_gravity="center"
     />
