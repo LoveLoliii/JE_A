@@ -1,3 +1,4 @@
+新项目使用Jetpack与mvvm构架进行重构开发--> [here](https://github.com/LoveLoliii/FiSiMiLi)，本项目不再更新。
 # JE_A
 + 此项目是使用Kotlin进行编写的Android App。
 + 此项目使用了[自由神社曲谱库2.0](https://github.com/zytx121/je)提供的后台数据。
